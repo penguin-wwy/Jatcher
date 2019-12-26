@@ -14,6 +14,9 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
 	}
 
 	INFO_LOG("Parse config...");
+	if (0 != parse_config(options)) {
+
+	}
 
 	jvmtiCapabilities capabilities;
 	memset(&capabilities, 0, sizeof(jvmtiCapabilities));

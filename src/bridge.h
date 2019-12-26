@@ -9,4 +9,6 @@ extern void info_log(const char *);
 extern void error_log(const char *);
 extern void warn_log(const char *);
 
+extern int32_t parse_config(const char *);
+
 #endif //JATCHER_BRIDGE_H

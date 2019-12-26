@@ -5,8 +5,11 @@ authors = ["penguin-wwy <940375606@qq.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-crate_type = [ "cdylib", "dylib", "rlib" ]
+crate_type = [ "staticlib" ]
 
 [dependencies]
 simple-logging = "2.0.2"
 log = "0.4.6"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
