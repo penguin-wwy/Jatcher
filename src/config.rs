@@ -1,23 +1,19 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
 use std::os::raw::c_char;
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::Read;
 use std::mem::transmute;
 use logger::error;
-use std::ptr::null_mut;
 use std::sync::Once;
-use std::cell::Cell;
 
-static EMPTY_BOX: Box<Configuration> = unsafe { Box::from_raw(null_mut()) };
+//static EMPTY_BOX: Box<Configuration> = unsafe { Box::from_raw(null_mut()) };
 
 #[derive(Deserialize, Serialize)]
 pub struct Configuration {
     pub verbose: bool,
     pub log_file: Option<String>,
     pub output_file: Option<String>,
-    pub bytecode_dump: Vec<String>,
     pub heap_print: bool,
     pub class_print: bool,
     pub break_point_json: Option<String>,
@@ -25,47 +21,57 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    fn create_from(data: &str) -> Box<serde_json::Result<Self>> {
-        Box::new(serde_json::from_str(data))
+//    const fn create_empty() -> Configuration {
+//        return Configuration {
+//            verbose: false,
+//            log_file: None,
+//            output_file: None,
+//            heap_print: false,
+//            class_print: false,
+//            break_point_json: None,
+//            watch_var: None
+//        };
+//    }
+
+    fn create_from(data: &str) -> serde_json::Result<Self> {
+        serde_json::from_str(data)
     }
 }
 
 struct ConfigParser {
     init: Once,
-    config: Cell<Box<Configuration>>,
-    success: Cell<bool>,
+    config: Option<Box<Configuration>>,
 }
 
-static CONFIG_BOX: ConfigParser = ConfigParser {
+static mut CONFIG_BOX: ConfigParser = ConfigParser {
     init: Once::new(),
-    config: Cell::new(EMPTY_BOX),
-    success: Cell::new(false),
+    config: None,
 };
 
 #[no_mangle]
+#[allow(unused_must_use)]
 pub unsafe extern "C" fn parse_config(path: *const c_char) -> i32 {
     assert!(!path.is_null());
     let mut content = String::new();
-    CStr::from_ptr(path).to_str().and_then(|path_str| {
-        File::open(path_str).as_mut().and_then(|file| {
-            file.read_to_string(&mut content).and_then(|_| {
+    CStr::from_ptr(path).to_str().map(|path_str| {
+        File::open(path_str).as_mut().map(|file| {
+            file.read_to_string(&mut content).map(|_| {
                 CONFIG_BOX.init.call_once(|| {
                     match Configuration::create_from(content.as_str()) {
-                        Ok(C) => {
-                            CONFIG_BOX.config.set(Box::new(C));
-                            CONFIG_BOX.success.set(true);
-                        },
-                        Err(E) => {
+                        Ok(c) => {
+                            CONFIG_BOX.config = Some(Box::new(c));
+                        }
+                        Err(e) => {
                             error(format!("{:?}", e).as_str());
-                            CONFIG_BOX.success.set(false);
+                            CONFIG_BOX.config = None;
                         }
                     };
                 });
             });
         });
     });
-    return match CONFIG_BOX.success.get() {
+    return match CONFIG_BOX.config.is_some() {
         true => 0,
         false => 1
-    }
+    };
 }
