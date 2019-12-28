@@ -17,6 +17,9 @@ static char buffer[BUFFER_SIZE] = {0};
 enum {
 	JVM_ERR	= 1,
 	JVMTI_ERR,
+	CAP_ERR,
+	CALL_ERR,
+	CONFIG_ERR,
 };
 
 #define RESET_STRING(MESSAGE...)	\
@@ -28,6 +31,12 @@ enum {
 		RESET_STRING(MESSAGE);				\
 		error_log(buffer);					\
 		exit(ERR_CODE);						\
+	} while (0)
+
+#define ERROR_LOG(MESSAGE)		\
+	do {						\
+		RESET_STRING(MESSAGE);	\
+		error_log(buffer);		\
 	} while (0)
 
 #define INFO_LOG(MESSAGE...)	\

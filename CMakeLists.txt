@@ -17,4 +17,4 @@ elseif(WIN32)
     )
 endif()
 
-add_library (jatcher SHARED src/tools.c)
+add_library (jatcher SHARED src/tools.c src/callbacks.c)
