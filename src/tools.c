@@ -2,9 +2,6 @@
 // Created by penguin on 19-12-25.
 //
 
-#include <jni.h>
-#include <jvmti.h>
-
 #include "tools.h"
 #include "callbacks.h"
 #include "error_info.h"
@@ -13,7 +10,7 @@
 #define true 1
 #define bool int
 
-static bool checkJVMTIError(jvmtiEnv *jvmti, jvmtiError err_code, const char *str) {
+bool checkJVMTIError(jvmtiEnv *jvmti, jvmtiError err_code, const char *str) {
 	if (err_code != JVMTI_ERROR_NONE) {
 		char *err_str = NULL;
 		(*jvmti)->GetErrorName(jvmti, err_code, &err_str);

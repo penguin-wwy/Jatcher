@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <memory.h>
 
+#include <jni.h>
+#include <jvmti.h>
+
 #include "bridge.h"
 
 #define BUFFER_SIZE	256
@@ -51,4 +54,5 @@ enum {
 		warn_log(buffer);		\
 	} while (0)
 
+int checkJVMTIError(jvmtiEnv *jvmti, jvmtiError err_code, const char *str);
 #endif //JATCHER_TOOLS_H

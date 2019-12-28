@@ -9,6 +9,7 @@ extern crate log;
 
 pub mod logger;
 pub mod config;
+pub mod runtime;
 
 #[cfg(test)]
 mod tests {
