@@ -1,8 +1,9 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ptr;
+use std::sync::Mutex;
 
-static mut RTINFO: *mut RTInfo = ptr::null_mut();
+static mut RTINFO: *const Mutex<*mut RTInfo> = 0 as *const Mutex<*mut RTInfo>;
 
 pub struct _jmethodID {}
 pub type jmethodID = *const _jmethodID;
@@ -10,19 +11,19 @@ pub type jmethodID = *const _jmethodID;
 pub struct _jobject {}
 pub type jobject = *mut _jobject;
 pub type jclass = jobject;
-pub type jthrowable = jobject;
-pub type jstring = jobject;
-pub type jarray = jobject;
-pub type jbooleanArray = jarray;
-pub type jbyteArray = jarray;
-pub type jcharArray = jarray;
-pub type jshortArray = jarray;
-pub type jintArray = jarray;
-pub type jlongArray = jarray;
-pub type jfloatArray = jarray;
-pub type jdoubleArray = jarray;
-pub type jobjectArray = jarray;
-pub type jweak = jobject;
+//pub type jthrowable = jobject;
+//pub type jstring = jobject;
+//pub type jarray = jobject;
+//pub type jbooleanArray = jarray;
+//pub type jbyteArray = jarray;
+//pub type jcharArray = jarray;
+//pub type jshortArray = jarray;
+//pub type jintArray = jarray;
+//pub type jlongArray = jarray;
+//pub type jfloatArray = jarray;
+//pub type jdoubleArray = jarray;
+//pub type jobjectArray = jarray;
+//pub type jweak = jobject;
 
 struct Klasses {
     id_map: RefCell<HashMap<String, jclass>>,
@@ -97,15 +98,19 @@ pub struct RTInfo {
 }
 
 impl RTInfo {
+    fn new() -> Self {
+        RTInfo {
+            klasses: Klasses::new(),
+            methods: Methods::new(),
+        }
+    }
+
     pub unsafe fn rt_instance() -> &'static mut Self {
         if RTINFO == ptr::null_mut() {
-            let mut r = Box::new(RTInfo {
-                klasses: Klasses::new(),
-                methods: Methods::new(),
-            });
-            RTINFO = &mut *r as *mut RTInfo;
+            let mut r = Box::new(RTInfo::new());
+            RTINFO = &Mutex::new(&mut *r as *mut RTInfo) as *const Mutex<*mut RTInfo>;
         }
-        &mut (*RTINFO)
+        &mut (**(*RTINFO).lock().unwrap())
     }
 
     pub fn get_class_id(&self, name: &String) -> Option<jclass> {
