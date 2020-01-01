@@ -6,6 +6,9 @@ use std::io::Read;
 use std::mem::transmute;
 use logger::error;
 use std::sync::Once;
+use simple_logging::log_to_file;
+use std::path::Path;
+use log::LevelFilter;
 
 //static EMPTY_BOX: Box<Configuration> = unsafe { Box::from_raw(null_mut()) };
 
@@ -41,11 +44,13 @@ impl Configuration {
 struct ConfigParser {
     init: Once,
     config: Option<Box<Configuration>>,
+    path: Option<String>
 }
 
 static mut CONFIG_BOX: ConfigParser = ConfigParser {
     init: Once::new(),
     config: None,
+    path: None
 };
 
 #[no_mangle]
@@ -60,6 +65,7 @@ pub unsafe extern "C" fn parse_config(path: *const c_char) -> i32 {
                     match Configuration::create_from(content.as_str()) {
                         Ok(c) => {
                             CONFIG_BOX.config = Some(Box::new(c));
+                            CONFIG_BOX.path = Some(String::from(path_str))
                         }
                         Err(e) => {
                             error(format!("{:?}", e).as_str());
@@ -74,4 +80,27 @@ pub unsafe extern "C" fn parse_config(path: *const c_char) -> i32 {
         true => 0,
         false => 1
     };
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn config_init() {
+    if CONFIG_BOX.config.is_none() {
+        return;
+    }
+    let config = CONFIG_BOX.config.as_ref().unwrap().as_ref();
+    let mut log_level = LevelFilter::Info;
+    if config.verbose {
+        log_level = LevelFilter::Debug;
+    }
+    if let Some(ref log_path) = config.log_file {
+        log_to_file(Path::new(log_path).canonicalize().unwrap().to_str().unwrap(), log_level);
+    }
+    if let Some(ref bk_path) = config.break_point_json {
+        let breakpoint_path = Path::new(bk_path);
+        if breakpoint_path.is_absolute() {
+
+        } else {
+
+        }
+    }
 }

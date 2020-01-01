@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::ptr;
 use std::sync::Mutex;
 
+const NULL_STRING: &'static str = "<null>";
+
 static mut RTINFO: *const Mutex<*mut RTInfo> = 0 as *const Mutex<*mut RTInfo>;
 
 pub struct _jmethodID {}
@@ -88,6 +90,51 @@ impl Methods {
     fn insert_method_id(&mut self, id: jmethodID, name: &str) {
         self.id_map.get_mut().insert(String::from(name), id);
         self.name_map.get_mut().insert(id, String::from(name));
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct BreakPoint {
+    class_name: Option<String>,
+    method_name: Option<String>,
+    method_signature: Option<String>,
+    line: Option<u32>,
+    var: Option<String>,
+}
+
+impl BreakPoint {
+    fn vec_from_str(data: &str) -> serde_json::Result<Vec<Self>> {
+        serde_json::from_str(data)
+    }
+
+    pub fn get_class_name(&self) -> Option<&String> {
+        self.class_name.as_ref()
+    }
+
+    pub fn get_method_name(&self) -> Option<&String> {
+        self.method_name.as_ref()
+    }
+
+    pub fn get_method_signature(&self) -> Option<&String> {
+        self.method_signature.as_ref()
+    }
+
+    pub fn get_method_full_name(&self) -> Option<String> {
+        Some(format!("{}{}", match self.method_name.as_ref() {
+            Some(s) => s.as_str(),
+            None => NULL_STRING
+        }, match self.method_signature.as_ref() {
+            Some(s) => s.as_ref(),
+            None => NULL_STRING
+        }))
+    }
+
+    pub fn get_line_number(&self) -> Option<&u32> {
+        self.line.as_ref()
+    }
+
+    pub fn get_variable(&self) -> Option<&String> {
+        self.var.as_ref()
     }
 }
 
