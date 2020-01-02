@@ -2,17 +2,19 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ptr;
 use std::sync::Mutex;
+use std::os::raw::{c_void, c_char};
 
 const NULL_STRING: &'static str = "<null>";
 
 static mut RTINFO: *const Mutex<*mut RTInfo> = 0 as *const Mutex<*mut RTInfo>;
 
-pub struct _jmethodID {}
-pub type jmethodID = *const _jmethodID;
-
-pub struct _jobject {}
-pub type jobject = *mut _jobject;
-pub type jclass = jobject;
+#[repr(C)]
+pub struct CStruct;
+pub type jmethodID = *const CStruct;
+pub type jobject = *const CStruct;
+pub type jclass = *const CStruct;
+pub type JNIEnv = *const CStruct;
+pub type jvmtiEnv = *const CStruct;
 //pub type jthrowable = jobject;
 //pub type jstring = jobject;
 //pub type jarray = jobject;
@@ -136,7 +138,7 @@ impl BreakPoint {
 pub struct RTInfo {
     klasses: Klasses,
     methods: Methods,
-    break_points: HashMap<String, BreakPoint>,
+    break_points: HashMap<String, Vec<BreakPoint>>,
 }
 
 impl RTInfo {
@@ -181,9 +183,26 @@ impl RTInfo {
     }
 
     pub fn insert_bk(&mut self, class_name: String, bk_point: BreakPoint) {
-        self.break_points.insert(class_name, bk_point);
+        if self.break_points.get(&class_name).is_some() {
+            self.break_points.get_mut(&class_name).unwrap().push(bk_point);
+        } else {
+            self.break_points.insert(class_name, vec![bk_point]);
+        }
     }
 }
 
-//#[no]
-//pub extern "C" fn
+#[repr(C)]
+pub struct KlassMethod {
+    jvmti: jvmtiEnv,
+    jni: JNIEnv,
+    klass: jclass,
+    class_name: *const u8,
+    method_id: jmethodID,
+    method_name: *const u8,
+    method_signature: *const u8,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn preprocess_method(km: *const KlassMethod) {
+
+}
