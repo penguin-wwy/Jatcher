@@ -95,46 +95,40 @@ impl Methods {
 
 #[derive(Deserialize, Serialize)]
 pub struct BreakPoint {
-    class_name: Option<String>,
-    method_name: Option<String>,
-    method_signature: Option<String>,
-    line: Option<u32>,
-    var: Option<String>,
+    class_name: String,
+    method_name: String,
+    method_signature: String,
+    line: u32,
+    var: String,
 }
 
 impl BreakPoint {
-    fn vec_from_str(data: &str) -> serde_json::Result<Vec<Self>> {
+    pub fn vec_from_str(data: &str) -> serde_json::Result<Vec<Self>> {
         serde_json::from_str(data)
     }
 
-    pub fn get_class_name(&self) -> Option<&String> {
-        self.class_name.as_ref()
+    pub fn get_class_name(&self) -> &String {
+        &self.class_name
     }
 
-    pub fn get_method_name(&self) -> Option<&String> {
-        self.method_name.as_ref()
+    pub fn get_method_name(&self) -> &String {
+        &self.method_name
     }
 
-    pub fn get_method_signature(&self) -> Option<&String> {
-        self.method_signature.as_ref()
+    pub fn get_method_signature(&self) -> &String {
+        &self.method_signature
     }
 
-    pub fn get_method_full_name(&self) -> Option<String> {
-        Some(format!("{}{}", match self.method_name.as_ref() {
-            Some(s) => s.as_str(),
-            None => NULL_STRING
-        }, match self.method_signature.as_ref() {
-            Some(s) => s.as_ref(),
-            None => NULL_STRING
-        }))
+    pub fn get_method_full_name(&self) -> String {
+        format!("{}{}", self.method_name, self.method_signature)
     }
 
-    pub fn get_line_number(&self) -> Option<&u32> {
-        self.line.as_ref()
+    pub fn get_line_number(&self) -> u32 {
+        self.line.clone()
     }
 
-    pub fn get_variable(&self) -> Option<&String> {
-        self.var.as_ref()
+    pub fn get_variable(&self) -> &String {
+        &self.var
     }
 }
 
@@ -142,6 +136,7 @@ impl BreakPoint {
 pub struct RTInfo {
     klasses: Klasses,
     methods: Methods,
+    break_points: HashMap<String, BreakPoint>,
 }
 
 impl RTInfo {
@@ -149,6 +144,7 @@ impl RTInfo {
         RTInfo {
             klasses: Klasses::new(),
             methods: Methods::new(),
+            break_points: HashMap::new()
         }
     }
 
@@ -183,4 +179,11 @@ impl RTInfo {
     pub fn insert_method_id(&mut self, id: jmethodID, name: &str) {
         self.methods.insert_method_id(id, name);
     }
+
+    pub fn insert_bk(&mut self, class_name: String, bk_point: BreakPoint) {
+        self.break_points.insert(class_name, bk_point);
+    }
 }
+
+//#[no]
+//pub extern "C" fn

@@ -7,8 +7,9 @@ use std::mem::transmute;
 use logger::error;
 use std::sync::Once;
 use simple_logging::log_to_file;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use log::LevelFilter;
+use runtime::{RTInfo, BreakPoint};
 
 //static EMPTY_BOX: Box<Configuration> = unsafe { Box::from_raw(null_mut()) };
 
@@ -82,6 +83,23 @@ pub unsafe extern "C" fn parse_config(path: *const c_char) -> i32 {
     };
 }
 
+fn parse_bk_file(path: &str) {
+    let rtinfo = unsafe {
+        RTInfo::rt_instance()
+    };
+    File::open(path).as_mut().map(|file| {
+        let mut content = String::new();
+        file.read_to_string(&mut content).map(|_|{
+            if let Ok(bk_vec) = BreakPoint::vec_from_str(content.as_str()) {
+                for bk in bk_vec {
+                    rtinfo.insert_bk(bk.get_class_name().clone(), bk);
+                }
+            }
+        });
+    });
+
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn config_init() {
     if CONFIG_BOX.config.is_none() {
@@ -98,9 +116,10 @@ pub unsafe extern "C" fn config_init() {
     if let Some(ref bk_path) = config.break_point_json {
         let breakpoint_path = Path::new(bk_path);
         if breakpoint_path.is_absolute() {
-
+            parse_bk_file(breakpoint_path.to_str().unwrap())
         } else {
-
+            parse_bk_file(PathBuf::from(CONFIG_BOX.path.as_ref().unwrap_or(&String::from("./")))
+                .parent().unwrap().join(breakpoint_path).to_str().unwrap())
         }
     }
 }
