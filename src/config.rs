@@ -123,3 +123,14 @@ pub unsafe extern "C" fn config_init() {
         }
     }
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn get_output_file() -> Option<*const u8> {
+    if CONFIG_BOX.config.is_none() {
+        return None;
+    }
+    match CONFIG_BOX.config.as_ref().unwrap().as_ref().output_file {
+        Some(ref f) => Some(f.as_ptr()),
+        _ => None
+    }
+}

@@ -20,6 +20,7 @@ static char buffer[BUFFER_SIZE] = {0};
 enum {
 	JVM_ERR	= 1,
 	JVMTI_ERR,
+	FILE_ERR,
 	CAP_ERR,
 	CALL_ERR,
 	CONFIG_ERR,

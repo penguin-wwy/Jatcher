@@ -12,5 +12,7 @@
 #define METHOD_NAME_FAIL "Get method name fail"
 #define LINE_NUMBER_FAIL "Get line number entry fail"
 #define LOCATION_FAIL "Get location fail"
+#define LOCATION_VAR_FAIL "Get local variable table fail"
+#define GET_LOCAL_VALUE_FAIL "Get local value fail"
 
 #endif //JATCHER_ERROR_INFO_H

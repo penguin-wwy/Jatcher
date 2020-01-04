@@ -68,8 +68,10 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
 
 	jvmtiEventCallbacks callbacks;
 	memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
+	callbacks.VMInit = &callbackVMInit;
 	callbacks.Breakpoint = &callbackEventBreakpoint;
 	callbacks.ClassPrepare = &callbackClassPrepare;
+	callbacks.VMDeath = &callbackVMDeath;
 
 	if (checkJVMTIError(jvmti, (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(jvmtiEventCallbacks)), CANNOT_SET_CALLBACKS)) {
 		ERROT_EXIT(CALL_ERR, "Exit with %d", CALL_ERR);

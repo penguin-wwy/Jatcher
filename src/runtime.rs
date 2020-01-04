@@ -226,17 +226,21 @@ pub unsafe extern "C" fn preprocess_method(km: *const KlassMethod) {
             return;
         }
     }
+    let name_cstr = CString::from_raw((*km).method_name as *mut c_char);
+    let name = name_cstr.to_str();
+    let signature_cstr = CString::from_raw((*km).method_signature as *mut c_char);
+    let signature = signature_cstr.to_str();
+    if name.is_err() || signature.is_err() {
+        return;
+    }
+    let fun_sig = format!("{}.{}:{}", class_name.unwrap(), name.unwrap(), signature.unwrap());
+    RTInfo::rt_instance().insert_method_id((*km).method_id, fun_sig.as_str());
     let break_point_vec = RTInfo::rt_instance().get_bk_vec(String::from(class_name.unwrap()).borrow());
     match break_point_vec {
         Some(v) => {
             let mut line_vec: Vec<u32> = vec![];
             for bk in v {
-                let name_cstr = CString::from_raw((*km).method_name as *mut c_char);
-                let name = name_cstr.to_str();
-                let signature_cstr = CString::from_raw((*km).method_signature as *mut c_char);
-                let signature = signature_cstr.to_str();
-                if name.is_ok() && signature.is_ok()
-                    && name.unwrap() == bk.method_name.as_str()
+                if name.unwrap() == bk.method_name.as_str()
                     && signature.unwrap() == bk.method_signature.as_str() {
                     line_vec.push(bk.line);
                 }

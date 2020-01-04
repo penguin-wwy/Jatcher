@@ -7,7 +7,9 @@
 
 #include <jvmti.h>
 
-void JNICALL callbackEventBreakpoint(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method, jlocation location);
+void JNICALL callbackVMInit(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread);
+void JNICALL callbackVMDeath(jvmtiEnv *jvmti_env, JNIEnv* jni_env);
 void JNICALL callbackClassPrepare(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jclass klass);
+void JNICALL callbackEventBreakpoint(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method, jlocation location);
 
 #endif //JATCHER_CALLBACKS_H
