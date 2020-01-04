@@ -6,6 +6,7 @@ extern crate serde_json;
 extern crate simple_logging;
 #[macro_use]
 extern crate log;
+extern crate core;
 
 pub mod logger;
 pub mod config;

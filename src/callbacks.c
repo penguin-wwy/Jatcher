@@ -6,9 +6,29 @@
 #include "callbacks.h"
 #include "error_info.h"
 
-//void set_break_point(jvmtiEnv *jvmti, JNIEnv *jniEnv, jclass klass, ) {
-//
-//}
+void set_break_point(Klass_Method *km, const u_int32_t *lines, size_t len) {
+	jvmtiEnv *jvmti = km->jvmti;
+	jmethodID jmethod = km->method_id;
+
+	INFO_LOG("Set break point in %s.%s\n", km->class_signature, km->method_name);
+
+	jint line_entry_count = 0;
+	jvmtiLineNumberEntry *line_number_entry = NULL;
+	if (checkJVMTIError(jvmti, (*jvmti)->GetLineNumberTable(jvmti, jmethod, &line_entry_count, &line_number_entry), LINE_NUMBER_FAIL)) {
+		return;
+	}
+
+	for (size_t i = 0; i < len; i++) {
+		u_int32_t line = lines[i];
+		jint loc = 0;
+		while (loc < line_entry_count && line_number_entry[loc].line_number != line) {
+			loc++;
+		}
+		if (loc < line_entry_count) {
+			checkJVMTIError(jvmti, (*jvmti)->SetBreakpoint(jvmti, jmethod, line_number_entry[loc].start_location), "Set Breakpoint fail");
+		}
+	}
+}
 
 void JNICALL callbackEventBreakpoint(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method, jlocation location) {
 

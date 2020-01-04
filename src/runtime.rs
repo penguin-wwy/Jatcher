@@ -3,6 +3,10 @@ use std::collections::HashMap;
 use std::ptr;
 use std::sync::Mutex;
 use std::os::raw::{c_void, c_char};
+use std::ffi::CString;
+use std::str::Utf8Error;
+use logger::{error_log, error};
+use core::borrow::Borrow;
 
 const NULL_STRING: &'static str = "<null>";
 
@@ -189,6 +193,10 @@ impl RTInfo {
             self.break_points.insert(class_name, vec![bk_point]);
         }
     }
+
+    pub fn get_bk_vec(&self, class_name: &String) -> Option<&Vec<BreakPoint>> {
+        self.break_points.get(class_name)
+    }
 }
 
 #[repr(C)]
@@ -202,7 +210,39 @@ pub struct KlassMethod {
     method_signature: *const u8,
 }
 
+#[link(name = "tools")]
+extern {
+    fn set_break_point(km: *const KlassMethod, lines: *const u32, len: usize);
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn preprocess_method(km: *const KlassMethod) {
-
+    let class_name_cstr = CString::from_raw((*km).class_name as *mut c_char);
+    let class_name = class_name_cstr.to_str();
+    match class_name {
+        Ok(s) => RTInfo::rt_instance().insert_class_id((*km).klass, s),
+        Err(e) => {
+            error(format!("{:?}", e).as_str());
+            return;
+        }
+    }
+    let break_point_vec = RTInfo::rt_instance().get_bk_vec(String::from(class_name.unwrap()).borrow());
+    match break_point_vec {
+        Some(v) => {
+            let mut line_vec: Vec<u32> = vec![];
+            for bk in v {
+                let name_cstr = CString::from_raw((*km).method_name as *mut c_char);
+                let name = name_cstr.to_str();
+                let signature_cstr = CString::from_raw((*km).method_signature as *mut c_char);
+                let signature = signature_cstr.to_str();
+                if name.is_ok() && signature.is_ok()
+                    && name.unwrap() == bk.method_name.as_str()
+                    && signature.unwrap() == bk.method_signature.as_str() {
+                    line_vec.push(bk.line);
+                }
+            }
+            set_break_point(km, line_vec.as_ptr(), line_vec.len());
+        }
+        _ => {}
+    }
 }

@@ -10,5 +10,7 @@
 #define CLASS_NAME_FAIL "Get class name fail"
 #define CLASS_METHOD_FAIL "Get class methods fail"
 #define METHOD_NAME_FAIL "Get method name fail"
+#define LINE_NUMBER_FAIL "Get line number entry fail"
+#define LOCATION_FAIL "Get location fail"
 
 #endif //JATCHER_ERROR_INFO_H
