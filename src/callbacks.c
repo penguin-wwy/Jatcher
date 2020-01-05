@@ -20,6 +20,14 @@ static FILE *file_stream;
 		fwrite(STR, 1, strlen(STR), file_stream);	\
 	} while (0)
 
+#define PRINT_FFLUSH()					\
+	do {								\
+		char buf[3] = {0};				\
+		sprintf(buf, "}\n");			\
+		fwrite(buf, 1, 2, file_stream);	\
+		fflush(file_stream);			\
+	} while (0)
+
 void JNICALL callbackVMInit(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread) {
 	const char *file_path = get_output_file();
 	if (file_path == NULL) {
@@ -185,11 +193,13 @@ void JNICALL callbackEventBreakpoint(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthre
 	}
 	jvmtiLineNumberEntry line_entry = line_number_entry[line_index];
 	size_t len = 0;
-	const char **var_list = get_var_name(method, line_entry.line_number, &len);
+	const char **var_list = (char **) get_var_name(method, line_entry.line_number, &len);
 	for (u_int32_t i = 0; i < len; i++) {
 		char *signature = NULL;
 		jint slot = get_local_variable(jvmti_env, method, var_list[i], location, signature);
 		PRINT_LINE(line_entry.line_number);
 		print_variable(jvmti_env, jni_env, thread, slot, var_list[i], signature);
+		PRINT_FFLUSH();
 	}
+	deallocate_str_vec_buffer(var_list, len);
 }

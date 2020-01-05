@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ptr;
+use std::{ptr, mem};
 use std::sync::Mutex;
 use std::os::raw::{c_void, c_char};
 use std::ffi::CString;
@@ -233,7 +233,7 @@ pub unsafe extern "C" fn preprocess_method(km: *const KlassMethod) {
     if name.is_err() || signature.is_err() {
         return;
     }
-    let fun_sig = format!("{}.{}:{}", class_name.unwrap(), name.unwrap(), signature.unwrap());
+    let fun_sig = format!("{}{}:{}", class_name.unwrap(), name.unwrap(), signature.unwrap());
     RTInfo::rt_instance().insert_method_id((*km).method_id, fun_sig.as_str());
     let break_point_vec = RTInfo::rt_instance().get_bk_vec(String::from(class_name.unwrap()).borrow());
     match break_point_vec {
@@ -249,4 +249,34 @@ pub unsafe extern "C" fn preprocess_method(km: *const KlassMethod) {
         }
         _ => {}
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_var_name(method: jmethodID, line: u32, len: *mut usize) -> *const c_void {
+    match RTInfo::rt_instance().get_method_name(&method) {
+        Some(s) => {
+            let mut var_list = Vec::<*const u8>::new();
+            let class_name = &s[..s.find(";").unwrap_or(0)];
+            match RTInfo::rt_instance().get_bk_vec(&class_name.to_string()) {
+                Some(v) => {
+                    for bk in v {
+                        if bk.line == line {
+                            var_list.push(bk.var.as_ptr());
+                        }
+                    }
+                    *len = var_list.len();
+                    let ptr = var_list.as_ptr();
+                    mem::forget(var_list);
+                    ptr as *const c_void
+                },
+                None => 0 as *const c_void,
+            }
+        },
+        None => 0 as *const c_void
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn deallocate_str_vec_buffer(ptr: *mut *const u8, len: usize) {
+    drop(Vec::from_raw_parts(ptr, len, len));
 }

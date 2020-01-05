@@ -92,7 +92,10 @@ fn parse_bk_file(path: &str) {
         file.read_to_string(&mut content).map(|_|{
             if let Ok(bk_vec) = BreakPoint::vec_from_str(content.as_str()) {
                 for bk in bk_vec {
-                    rtinfo.insert_bk(bk.get_class_name().clone(), bk);
+                    rtinfo.insert_bk(match bk.get_class_name().ends_with(";") && bk.get_class_name().starts_with("L") {
+                            true => bk.get_class_name().clone(),
+                            false => format!("L{};", bk.get_class_name())
+                        }, bk);
                 }
             }
         });
