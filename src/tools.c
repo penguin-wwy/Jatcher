@@ -10,6 +10,8 @@
 #define true 1
 #define bool int
 
+extern FILE *file_stream;
+
 bool checkJVMTIError(jvmtiEnv *jvmti, jvmtiError err_code, const char *str) {
 	if (err_code != JVMTI_ERROR_NONE) {
 		char *err_str = NULL;
@@ -21,6 +23,7 @@ bool checkJVMTIError(jvmtiEnv *jvmti, jvmtiError err_code, const char *str) {
 }
 
 JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
+	INFO_LOG("Jatcher start...");
 	jvmtiEnv *jvmti = NULL;
 	if (JNI_OK != (*vm)->GetEnv(vm, (void **) (&jvmti), JVMTI_VERSION_1_2)) {
 		ERROT_EXIT(JVMTI_ERR, "ERROR: Unable to access JVMTI.\n");
@@ -29,6 +32,14 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
 	INFO_LOG("Parse config...");
 	if (0 != parse_config(options)) {
 		ERROT_EXIT(CONFIG_ERR, "ERROR: Parse config file failed.\n");
+	}
+	config_init();
+	const char *file_path = get_output_file();
+	if (file_path == NULL || strlen(file_path) == 0) {
+		file_stream = stdout;
+	} else {
+		file_stream = fopen(file_path, "w");
+		if (file_stream == NULL) ERROT_EXIT(FILE_ERR, "Result file %s open failed", file_path);
 	}
 
 	jvmtiCapabilities capabilities;
@@ -68,14 +79,18 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
 
 	jvmtiEventCallbacks callbacks;
 	memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
-	callbacks.VMInit = &callbackVMInit;
 	callbacks.Breakpoint = &callbackEventBreakpoint;
 	callbacks.ClassPrepare = &callbackClassPrepare;
-	callbacks.VMDeath = &callbackVMDeath;
 
 	if (checkJVMTIError(jvmti, (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(jvmtiEventCallbacks)), CANNOT_SET_CALLBACKS)) {
 		ERROT_EXIT(CALL_ERR, "Exit with %d", CALL_ERR);
 	}
 
 	return JNI_OK;
+}
+
+JNIEXPORT void JNICALL Agent_OnUnload(JavaVM *vm) {
+	if (file_stream != stdout) {
+		fclose(file_stream);
+	}
 }

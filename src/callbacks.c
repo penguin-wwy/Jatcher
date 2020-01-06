@@ -6,7 +6,7 @@
 #include "callbacks.h"
 #include "error_info.h"
 
-static FILE *file_stream;
+FILE *file_stream;
 
 #define PRINT_LINE(LINE)									\
 	do {													\
@@ -27,22 +27,6 @@ static FILE *file_stream;
 		fwrite(buf, 1, 2, file_stream);	\
 		fflush(file_stream);			\
 	} while (0)
-
-void JNICALL callbackVMInit(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread) {
-	const char *file_path = get_output_file();
-	if (file_path == NULL) {
-		file_stream = stdout;
-	} else {
-		file_stream = fopen(file_path, "w");
-		if (file_stream == NULL) ERROT_EXIT(FILE_ERR, "Result file %s open failed", file_path);
-	}
-}
-
-void JNICALL callbackVMDeath(jvmtiEnv *jvmti_env, JNIEnv* jni_env) {
-	if (file_stream != stdout) {
-		fclose(file_stream);
-	}
-}
 
 void set_break_point(Klass_Method *km, const u_int32_t *lines, size_t len) {
 	jvmtiEnv *jvmti = km->jvmti;
@@ -196,7 +180,7 @@ void JNICALL callbackEventBreakpoint(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthre
 	const char **var_list = (char **) get_var_name(method, line_entry.line_number, &len);
 	for (u_int32_t i = 0; i < len; i++) {
 		char *signature = NULL;
-		jint slot = get_local_variable(jvmti_env, method, var_list[i], location, signature);
+		jint slot = get_local_variable(jvmti_env, method, var_list[i], location, &signature);
 		PRINT_LINE(line_entry.line_number);
 		print_variable(jvmti_env, jni_env, thread, slot, var_list[i], signature);
 		PRINT_FFLUSH();
