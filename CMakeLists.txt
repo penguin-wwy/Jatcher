@@ -17,4 +17,7 @@ elseif(WIN32)
     )
 endif()
 
+execute_process(COMMAND cargo build --out-dir target -Z unstable-options WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
 add_library (jatcher SHARED src/tools.c src/callbacks.c)
+target_link_libraries(jatcher ${PROJECT_SOURCE_DIR}/target/libJatcher.a)

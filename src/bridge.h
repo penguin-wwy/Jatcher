@@ -23,6 +23,7 @@ extern void error_log(const char *);
 extern void warn_log(const char *);
 
 extern int32_t parse_config(const char *);
+extern void config_init();
 
 extern void preprocess_method(Klass_Method *);
 

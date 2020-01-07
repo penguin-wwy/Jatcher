@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::{ptr, mem};
 use std::sync::Mutex;
-use std::os::raw::{c_void, c_char};
+use std::os::raw::{c_void, c_char, c_int};
 use std::ffi::CString;
 use std::str::Utf8Error;
 use logger::{error_log, error};
@@ -210,7 +210,6 @@ pub struct KlassMethod {
     method_signature: *const u8,
 }
 
-#[link(name = "tools")]
 extern {
     fn set_break_point(km: *const KlassMethod, lines: *const u32, len: usize);
 }

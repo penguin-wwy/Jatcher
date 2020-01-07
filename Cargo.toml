@@ -2,12 +2,14 @@
 name = "Jatcher"
 version = "0.1.0"
 authors = ["penguin-wwy <940375606@qq.com>"]
-links = "tools"
-build = "build.rs"
+
+# FIXME: rust link native library , that created by build.rs, make native library's global symbol locally
+#links = "tools"
+#build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-crate_type = [ "dylib" ]
+crate_type = [ "dylib", "staticlib" ]
 
 [build-dependencies]
 cc = { version = "1.0", features = ["parallel"] }
