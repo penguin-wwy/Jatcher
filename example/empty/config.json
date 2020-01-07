@@ -1,0 +1,9 @@
+{
+  "verbose": false,
+  "log_file": null,
+  "output_file": null,
+  "heap_print": false,
+  "class_print": false,
+  "break_point_json": "breakpoints.json",
+  "watch_var": null
+}

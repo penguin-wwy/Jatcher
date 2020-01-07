@@ -1,0 +1,16 @@
+[
+  {
+    "class_name": "empty",
+    "method_name": "getFull",
+    "method_signature": "(Ljava/lang/String;)I",
+    "line": 7,
+    "var": "len"
+  },
+  {
+    "class_name": "empty",
+    "method_name": "getEmpty",
+    "method_signature": "(Ljava/lang/String;)I",
+    "line": 21,
+    "var": "len"
+  }
+]
