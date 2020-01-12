@@ -57,6 +57,15 @@ void JNICALL callbackClassPrepare(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread 
 	if (checkJVMTIError(jvmti_env, (*jvmti_env)->GetClassSignature(jvmti_env, klass, &class_signature, NULL), CLASS_NAME_FAIL)) {
 		return;
 	}
+	/**
+	 * Skip classes with java/ and sun/
+	 * TODO : Add more generic classes
+     */
+	if (strstr(class_signature, "Ljava/") != NULL
+		|| strstr(class_signature, "Lsun/") != NULL
+		|| strstr(class_signature, "com/intellij/rt") != NULL) {
+		return;
+	}
 
 	jint method_count;
 	jmethodID *method_array;
