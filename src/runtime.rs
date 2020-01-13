@@ -10,15 +10,15 @@ use core::borrow::Borrow;
 
 const NULL_STRING: &'static str = "<null>";
 
-static mut RTINFO: *const Mutex<*mut RTInfo> = 0 as *const Mutex<*mut RTInfo>;
+static mut RTINFO: *mut RTInfo = 0 as *mut RTInfo;
 
 #[repr(C)]
-pub struct CStruct;
-pub type jmethodID = *const CStruct;
-pub type jobject = *const CStruct;
-pub type jclass = *const CStruct;
-pub type JNIEnv = *const CStruct;
-pub type jvmtiEnv = *const CStruct;
+pub struct CStruct {}
+pub type jmethodID = *mut CStruct;
+pub type jobject = *mut CStruct;
+pub type jclass = *mut CStruct;
+pub type JNIEnv = *mut CStruct;
+pub type jvmtiEnv = *mut CStruct;
 //pub type jthrowable = jobject;
 //pub type jstring = jobject;
 //pub type jarray = jobject;
@@ -146,20 +146,16 @@ pub struct RTInfo {
 }
 
 impl RTInfo {
-    fn new() -> Self {
-        RTInfo {
-            klasses: Klasses::new(),
-            methods: Methods::new(),
-            break_points: HashMap::new()
-        }
-    }
 
     pub unsafe fn rt_instance() -> &'static mut Self {
         if RTINFO == ptr::null_mut() {
-            let mut r = Box::new(RTInfo::new());
-            RTINFO = &Mutex::new(&mut *r as *mut RTInfo) as *const Mutex<*mut RTInfo>;
+            RTINFO = &mut *Box::new(RTInfo {
+                klasses: Klasses::new(),
+                methods: Methods::new(),
+                break_points: HashMap::new()
+            }) as *mut RTInfo;
         }
-        &mut (**(*RTINFO).lock().unwrap())
+        &mut *RTINFO
     }
 
     pub fn get_class_id(&self, name: &String) -> Option<jclass> {
@@ -219,7 +215,9 @@ pub unsafe extern "C" fn preprocess_method(km: *const KlassMethod) {
     let class_name_cstr = CString::from_raw((*km).class_name as *mut c_char);
     let class_name = class_name_cstr.to_str();
     match class_name {
-        Ok(s) => RTInfo::rt_instance().insert_class_id((*km).klass, s),
+        Ok(s) => {
+            RTInfo::rt_instance().insert_class_id((*km).klass, s)
+        },
         Err(e) => {
             error(format!("{:?}", e).as_str());
             return;
